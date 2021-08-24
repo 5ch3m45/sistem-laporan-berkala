@@ -12,6 +12,7 @@ use App\Models\Company;
 use App\Models\CompanyReport;
 use App\Models\Report;
 use App\Models\File;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class CompanyReportController extends Controller
 {
@@ -37,17 +38,60 @@ class CompanyReportController extends Controller
 
     public function store(Company $company, StoreReportRequest $request)
     {
-        $path = File::where('name', $request->file)->first(); // dapatkan lokasi file
-        if (!$path) { // jika tidak ditemukan
-            return back()->withErrors(['file' => 'File is not found']); // kembali ke form, beri pesan error
+        /**
+         * kode berikut digunakan untuk menghindari duplikasi laporan di tahun dan triwulan yang sama
+         */
+        $report_exist = Report::where([
+            'company_id' => $company->id,
+            'year' => $request->year,
+            'quarter' => $request->quarter
+        ])->first();
+        if( $report_exist ) {
+            return back()->withFail(`Laporan Triwulan {$request->quarter} Tahun {$request->year} {$company->name} sudah ada.`);
         }
+
+        /**
+         * kode berikut digunakan untuk mendapatkan file berdasarkan nama
+         */
+        $file = File::where('name', $request->file)->first();
+
+        /**
+         * Jika file tidak ditemukan,
+         * maka kembali ke form dengan pesan error
+         */
+        if (!$file) {
+            return back()->withErrors(['file' => 'File is not found']);
+        }
+        /**
+         * Kode berikut digunakan untuk mendapatkan alamat file
+         */
+        $uri = Storage::path($file->uri);
+        /**
+         * Kode berikut digunakan untuk memuat file kedalam bentuk spreadsheet
+         */
+        $spreadsheet = IOFactory::load($uri);
         
-        $file = Storage::path($path->uri); // dapatkan file berdasarkan url
-        $spreadsheet = IOFactory::load($file); // load file sebagai spreadsheet
-        
+        /**
+         * Kode berikut digunakan untuk menambahkan object
+         * company_id dan reporter_id kedalam array $request
+         */
+        $sheet_0 = $spreadsheet->setActiveSheetIndex(0);
+        $request['version'] = $sheet_0->getCell('D4')->getValue(); // versi laporan
+        $request['periode'] = Date::excelToDateTimeObject($sheet_0->getCell('D11')->getValue()); // periode laporan
+        $request['reported_at'] = Date::excelToDateTimeObject($sheet_0->getCell('D5')->getValue()); // tanggal pelaporan
         $request['company_id'] = $company->id; // menambahkan company_id ke $request
         $request['reporter_id'] = Auth::id(); // menambahkan reporter_id ke $request
+        /**
+         * Kode berikut ini digunakan untuk menyimpan report
+         * dari $request ke database
+         */
         $report = Report::create($request->all()); // menyimpan report dengan semua parameter di $request
+
+        /**
+         * Kode berikut ini digunakan untuk mapping cell
+         * yang kemudian disimpan ke database dengan kode akun
+         * yang telah ditentukan
+         */
 
         $data_lpk = array(
             'LPK_A_AL_KSK' => 'E18', // Laporan Posisi Keuangan > Aset > Aset Lancar > Kas dan Setara kas

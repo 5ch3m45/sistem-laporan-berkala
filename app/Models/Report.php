@@ -13,7 +13,10 @@ class Report extends Model
       'company_id',
       'year',
       'quarter',
-      'reporter_id'
+      'reporter_id',
+      'version',
+      'periode',
+      'reported_at'
     ];
 
     public function company() {

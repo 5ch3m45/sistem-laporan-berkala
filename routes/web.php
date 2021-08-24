@@ -23,6 +23,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
   require(__DIR__.'/subroutes/analysis.php');
   require(__DIR__.'/subroutes/companies.php');
+  require(__DIR__.'/subroutes/employe.php');
   require(__DIR__.'/subroutes/file.php');
   require(__DIR__.'/subroutes/notes.php');
   require(__DIR__.'/subroutes/reports.php');

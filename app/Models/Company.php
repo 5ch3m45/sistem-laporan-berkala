@@ -27,6 +27,10 @@ class Company extends Model
       'tax_number',
     ];
 
+    public function employes() {
+        return $this->hasMany(Employe::class, 'company_id');
+    }
+
     public function file()
     {
       return $this->hasMany(File::class, 'company_id');

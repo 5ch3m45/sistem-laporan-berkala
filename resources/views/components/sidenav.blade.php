@@ -36,6 +36,7 @@
                     <li class="{{ $active == 'informasi' ? 'active' : '' }}"><a><i class="fa fa-info-circle"></i> Informasi <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu" style="{{ $active == 'informasi' ? 'display:block;' : '' }}">
                             <li><a href="{{ route('show_company', ['company' => $companyid]) }}">Informasi Perusahaan</a></li>
+                            <li><a href="{{ route('employe', ['company' => $companyid]) }}">Anggota Perusahaan</a></li>
                             <li><a href="{{ route('stats', ['company' => $companyid]) }}">Statistik Perusahaan</a></li>
                         </ul>
                     </li>

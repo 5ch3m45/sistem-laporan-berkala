@@ -26,6 +26,48 @@
                 <div class="col-md-12 col-sm-12 ">
                     <div class="x_panel tile">
                         <div class="x_title">
+                            <h2>Informasi Laporan</h2>
+                            <ul class="nav navbar-right panel_toolbox">
+                                <li>
+                                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                                </li>
+                                <li>
+                                    <a class="close-link"><i class="fa fa-close"></i></a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="x_content">
+                            <form id="demo-form2" data-parsley-validate="" class="form-horizontal form-label-left" novalidate="">
+                                <div class="item form-group">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Versi Laporan</span>
+                                    </label>
+                                    <div class="col-md-6 col-sm-6 ">
+                                        <input type="text" id="name" readonly class="form-control" value="{{ $report->version }}">
+                                    </div>
+                                </div>
+                                <div class="item form-group">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Periode Laporan</span>
+                                    </label>
+                                    <div class="col-md-6 col-sm-6 ">
+                                        <input type="text" id="name" readonly class="form-control" value="{{ $report->periode }}">
+                                    </div>
+                                </div>
+                                <div class="item form-group">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Tanggal Pelaporan</span>
+                                    </label>
+                                    <div class="col-md-6 col-sm-6 ">
+                                        <input type="text" id="name" readonly class="form-control" value="{{ $report->reported_at }}">
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+                <div class="col-md-12 col-sm-12 ">
+                    <div class="x_panel tile">
+                        <div class="x_title">
                             <h2>Laporan Triwulan {{ $report->quarter }} Tahun {{ $report->year }}</h2>
                             <ul class="nav navbar-right panel_toolbox">
                                 <li>

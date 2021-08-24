@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\CompanyReport;
+use App\Models\Employe;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -47,17 +48,70 @@ class AnalysisController extends Controller {
         ));
     }
 
+    /**
+     * Fungsi saveDivider digunakan untuk mengamankan operasi
+     * pembagian matematika. Suatu angka yang dibagi dengan angka 0
+     * akan menimbulkan error pada program. Sehingga jika pembagi
+     * adalah 0, maka hasilnya 0 atau infinite.
+     */
     public function saveDivider ($the_number, $divider) {
         if ($divider == 0) {
             return 0;
         }
+        
         return $the_number/$divider;
     }
 
+    /**
+     * Fungsi ini digunakan untuk menghitung persentase kenaikan
+     * atau penurunan dari periode sebelumnya ($basic), dengan periode
+     * selanjutnya ($delta)
+     * 
+     * Contoh input:
+     *  $basic = 100
+     *  $delta = 50
+     * 
+     * Contoh output:
+     *  $result = (50-100)/100 = -50/100 = -0.5
+     */
     public function getPercentage($basic, $delta) {
+        // return dd($basic, $delta);
         return $this->saveDivider($delta - $basic, $basic)*100;
     }
 
+    /**
+     * Fungsi nFormat digunakan untuk memformat angka dengan titik.
+     * 
+     * Contoh input: -1000000,99
+     * Contoh output: -1.000.000,99
+     * 
+     * Dikombinasikan dengan fungsi ifNegatif menjadi
+     * 
+     */
+    public function nFormat($number, $comma) {
+        return number_format($number, $comma, ',', '.');
+    }
+
+    /**
+     * Fungsi ifNegative berguna untuk menambah round brecket "()"
+     * pada angka negatif.
+     * 
+     * Contoh input: -1000,99
+     * Contoh output: (1000,99)
+     * 
+     * Dikombinasikan dengan nFormat menjadi
+     * Contoh output: (1.000,99)
+     */
+    public function ifNegative($number, $comma = 0) {
+        if($number < 0) {
+            return '('.$this->nFormat($number*(-1), $comma).')';
+        }
+        return $this->nFormat($number, $comma);
+    }
+
+    /**
+     * Fungsi exportWord digunakan untuk mengeksport data ke word
+     */
     public function exportWord(Company $company, Request $request) {
         $latest_report = Report::where('company_id', $company->id)
             ->orderByDesc('year')
@@ -94,405 +148,451 @@ class AnalysisController extends Controller {
         $ACC_LRSP = 'LRK_B_LRSP';
         $ACC_TPP = 'LRK_TPP';
         $ACC_LRPB = 'LRK_LRPB';
+        $ACC_JOG = 'LO_PDG_TOTAL_OPG';
         $ACC_JPD = 'LO_PDG_TOTAL_UPG';
         $ACC_JN = 'LO_PDG_TOTAL_N';
         $ACC_TPP = 'LRK_TPP';
 
+        $company_cp = Employe::where(['company_id' => $company->id, 'is_contact_person' => 1])->first();
+        $company_member = Employe::where(['company_id' => $company->id, 'is_contact_person' => 0])->limit(4)->get();
+
+        /**
+         * Kode berikut digunakan untuk mengatur local time
+         */
+        setlocale(LC_ALL, 'id-ID', 'id_ID');
+
         $data_to_write = array(
             'company_name' => $company->name,
+            'company_address' => $company->add_road.', '.$company->add_village.', '.$company->add_subdistrict.', '.$company->add_province.', '.$company->postalcode,
             'company_phone' => $company->phone,
             'company_lic_number' => $company->lic_number,
             'company_lic_date' => $company->lic_date,
             'company_tax_number' => $company->tax_number,
             'company_region' => $company->regional,
             'company_email' => $company->email,
+            'company_contact_person_name' => $company_cp ? $company_cp->name : '',
+            'company_contact_person_position' => $company_cp ? $company_cp->position : '',
+            'company_contact_person_phone' => $company_cp ? $company_cp->phone : '',
+            'company_member_name_1' => count($company_member) == 1 ? $company_member[0]->name : '',
+            'company_member_name_2' => count($company_member) == 2 ? $company_member[1]->name : '',
+            'company_member_name_3' => count($company_member) == 3 ? $company_member[2]->name : '',
+            'company_member_name_4' => count($company_member) == 4 ? $company_member[3]->name : '',
+            'company_member_position_1' => count($company_member) == 1 ? $company_member[0]->position : '',
+            'company_member_position_2' => count($company_member) == 2 ? $company_member[1]->position : '',
+            'company_member_position_3' => count($company_member) == 3 ? $company_member[2]->position : '',
+            'company_member_position_4' => count($company_member) == 4 ? $company_member[3]->position : '',
             'quarter' => $this->numberToRoman($q3->quarter),
             'year' => $q3->year,
-            'ksk1' => $q1->data->where('account_code', $ACC_KSK)->first()->value,
-            'ksk2' => $q2->data->where('account_code', $ACC_KSK)->first()->value,
-            'ksk3' => $q3->data->where('account_code', $ACC_KSK)->first()->value,
-            'ksky' => $this->getPercentage(
+            'ksk1' => $this->ifNegative($q1->data->where('account_code', $ACC_KSK)->first()->value),
+            'ksk2' => $this->ifNegative($q2->data->where('account_code', $ACC_KSK)->first()->value),
+            'ksk3' => $this->ifNegative($q3->data->where('account_code', $ACC_KSK)->first()->value),
+            'ksky' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_KSK)->first()->value,
                 $q3->data->where('account_code', $ACC_KSK)->first()->value,
-            ),
-            'kskq' => $this->getPercentage(
+            ), 2),
+            'kskq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_KSK)->first()->value,
                 $q3->data->where('account_code', $ACC_KSK)->first()->value,
-            ),
-            'pdg1' => $q1->data->where('account_code', $ACC_PDG)->first()->value,
-            'pdg2' => $q2->data->where('account_code', $ACC_PDG)->first()->value,
-            'pdg3' => $q3->data->where('account_code', $ACC_PDG)->first()->value,
-            'pdgy' => $this->getPercentage(
+            ), 2),
+            'pdg1' => $this->ifNegative($q1->data->where('account_code', $ACC_PDG)->first()->value),
+            'pdg2' => $this->ifNegative($q2->data->where('account_code', $ACC_PDG)->first()->value),
+            'pdg3' => $this->ifNegative($q3->data->where('account_code', $ACC_PDG)->first()->value),
+            'pdgy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PDG)->first()->value,
                 $q3->data->where('account_code', $ACC_PDG)->first()->value,
-            ),
-            'pdgq' => $this->getPercentage(
+            ), 2),
+            'pdgq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PDG)->first()->value,
                 $q3->data->where('account_code', $ACC_PDG)->first()->value,
-            ),
-            'all1' => $q1->data->where('account_code', $ACC_ALL)->first()->value,
-            'all2' => $q2->data->where('account_code', $ACC_ALL)->first()->value,
-            'all3' => $q3->data->where('account_code', $ACC_ALL)->first()->value,
-            'ally' => $this->getPercentage(
+            ), 2),
+            'all1' => $this->ifNegative($q1->data->where('account_code', $ACC_ALL)->first()->value),
+            'all2' => $this->ifNegative($q2->data->where('account_code', $ACC_ALL)->first()->value),
+            'all3' => $this->ifNegative($q3->data->where('account_code', $ACC_ALL)->first()->value),
+            'ally' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_ALL)->first()->value,
                 $q3->data->where('account_code', $ACC_ALL)->first()->value,
-            ),
-            'allq' => $this->getPercentage(
+            ), 2),
+            'allq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_ALL)->first()->value,
                 $q3->data->where('account_code', $ACC_ALL)->first()->value,
-            ),
-            'al1' => $q1->data->where('account_code', $ACC_AL)->first()->value,
-            'al2' => $q2->data->where('account_code', $ACC_AL)->first()->value,
-            'al3' => $q3->data->where('account_code', $ACC_AL)->first()->value,
-            'aly' => $this->getPercentage(
+            ), 2),
+            'al1' => $this->ifNegative($q1->data->where('account_code', $ACC_AL)->first()->value),
+            'al2' => $this->ifNegative($q2->data->where('account_code', $ACC_AL)->first()->value),
+            'al3' => $this->ifNegative($q3->data->where('account_code', $ACC_AL)->first()->value),
+            'aly' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_AL)->first()->value,
                 $q3->data->where('account_code', $ACC_AL)->first()->value,
-            ),
-            'alq' => $this->getPercentage(
+            ), 2),
+            'alq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_AL)->first()->value,
                 $q3->data->where('account_code', $ACC_AL)->first()->value,
-            ),
-            'atl1' => $q1->data->where('account_code', $ACC_ATL)->first()->value,
-            'atl2' => $q2->data->where('account_code', $ACC_ATL)->first()->value,
-            'atl3' => $q3->data->where('account_code', $ACC_ATL)->first()->value,
-            'atly' => $this->getPercentage(
+            ), 2),
+            'atl1' => $this->ifNegative($q1->data->where('account_code', $ACC_ATL)->first()->value),
+            'atl2' => $this->ifNegative($q2->data->where('account_code', $ACC_ATL)->first()->value),
+            'atl3' => $this->ifNegative($q3->data->where('account_code', $ACC_ATL)->first()->value),
+            'atly' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_ATL)->first()->value,
                 $q3->data->where('account_code', $ACC_ATL)->first()->value,
-            ),
-            'atlq' => $this->getPercentage(
+            ), 2),
+            'atlq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_ATL)->first()->value,
                 $q3->data->where('account_code', $ACC_ATL)->first()->value,
-            ),
-            'ta1' => $q1->data->where('account_code', $ACC_TA)->first()->value,
-            'ta2' => $q2->data->where('account_code', $ACC_TA)->first()->value,
-            'ta3' => $q3->data->where('account_code', $ACC_TA)->first()->value,
-            'tay' => $this->getPercentage(
+            ), 2),
+            'ta1' => $this->ifNegative($q1->data->where('account_code', $ACC_TA)->first()->value),
+            'ta2' => $this->ifNegative($q2->data->where('account_code', $ACC_TA)->first()->value),
+            'ta3' => $this->ifNegative($q3->data->where('account_code', $ACC_TA)->first()->value),
+            'tay' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_TA)->first()->value,
                 $q3->data->where('account_code', $ACC_TA)->first()->value,
-            ),
-            'taq' => $this->getPercentage(
+            ), 2),
+            'taq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_TA)->first()->value,
                 $q3->data->where('account_code', $ACC_TA)->first()->value,
-            ),
-            'll1' => $q1->data->where('account_code', $ACC_LL)->first()->value,
-            'll2' => $q2->data->where('account_code', $ACC_LL)->first()->value,
-            'll3' => $q3->data->where('account_code', $ACC_LL)->first()->value,
-            'lly' => $this->getPercentage(
+            ), 2),
+            'll1' => $this->ifNegative($q1->data->where('account_code', $ACC_LL)->first()->value),
+            'll2' => $this->ifNegative($q2->data->where('account_code', $ACC_LL)->first()->value),
+            'll3' => $this->ifNegative($q3->data->where('account_code', $ACC_LL)->first()->value),
+            'lly' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_LL)->first()->value,
                 $q3->data->where('account_code', $ACC_LL)->first()->value,
-            ),
-            'llq' => $this->getPercentage(
+            ), 2),
+            'llq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_LL)->first()->value,
                 $q3->data->where('account_code', $ACC_LL)->first()->value,
-            ),
-            'ltl1' => $q1->data->where('account_code', $ACC_LTL)->first()->value,
-            'ltl2' => $q2->data->where('account_code', $ACC_LTL)->first()->value,
-            'ltl3' => $q3->data->where('account_code', $ACC_LTL)->first()->value,
-            'ltly' => $this->getPercentage(
+            ), 2),
+            'ltl1' => $this->ifNegative($q1->data->where('account_code', $ACC_LTL)->first()->value),
+            'ltl2' => $this->ifNegative($q2->data->where('account_code', $ACC_LTL)->first()->value),
+            'ltl3' => $this->ifNegative($q3->data->where('account_code', $ACC_LTL)->first()->value),
+            'ltly' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_LTL)->first()->value,
                 $q3->data->where('account_code', $ACC_LTL)->first()->value,
-            ),
-            'ltlq' => $this->getPercentage(
+            ), 2),
+            'ltlq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_LTL)->first()->value,
                 $q3->data->where('account_code', $ACC_LTL)->first()->value,
-            ),
-            'tl1' => $q1->data->where('account_code', $ACC_TL)->first()->value,
-            'tl2' => $q2->data->where('account_code', $ACC_TL)->first()->value,
-            'tl3' => $q3->data->where('account_code', $ACC_TL)->first()->value,
-            'tly' => $this->getPercentage(
+            ), 2),
+            'tl1' => $this->ifNegative($q1->data->where('account_code', $ACC_TL)->first()->value),
+            'tl2' => $this->ifNegative($q2->data->where('account_code', $ACC_TL)->first()->value),
+            'tl3' => $this->ifNegative($q3->data->where('account_code', $ACC_TL)->first()->value),
+            'tly' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_TL)->first()->value,
                 $q3->data->where('account_code', $ACC_TL)->first()->value,
-            ),
-            'tlq' => $this->getPercentage(
+            ), 2),
+            'tlq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_TL)->first()->value,
                 $q3->data->where('account_code', $ACC_TL)->first()->value,
-            ),
-            'md1' => $q1->data->where('account_code', $ACC_MD)->first()->value,
-            'md2' => $q2->data->where('account_code', $ACC_MD)->first()->value,
-            'md3' => $q3->data->where('account_code', $ACC_MD)->first()->value,
-            'mdy' => $this->getPercentage(
+            ), 2),
+            'md1' => $this->ifNegative($q1->data->where('account_code', $ACC_MD)->first()->value),
+            'md2' => $this->ifNegative($q2->data->where('account_code', $ACC_MD)->first()->value),
+            'md3' => $this->ifNegative($q3->data->where('account_code', $ACC_MD)->first()->value),
+            'mdy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_MD)->first()->value,
                 $q3->data->where('account_code', $ACC_MD)->first()->value,
-            ),
-            'mdq' => $this->getPercentage(
+            ), 2),
+            'mdq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_MD)->first()->value,
                 $q3->data->where('account_code', $ACC_MD)->first()->value,
-            ),
-            'slr1' => $q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slr2' => $q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slr3' => $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slry' => $this->getPercentage(
+            ), 2),
+            'slr1' => $this->ifNegative($q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slr2' => $this->ifNegative($q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slr3' => $this->ifNegative($q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slry' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'slrq' => $this->getPercentage(
+            ), 2),
+            'slrq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'slrat1' => $q1->data->where('account_code', $ACC_SLRAT)->first()->value,
-            'slrat2' => $q2->data->where('account_code', $ACC_SLRAT)->first()->value,
-            'slrat3' => $q3->data->where('account_code', $ACC_SLRAT)->first()->value,
-            'slraty' => $this->getPercentage(
+            ), 2),
+            'slrat1' => $this->ifNegative($q1->data->where('account_code', $ACC_SLRAT)->first()->value),
+            'slrat2' => $this->ifNegative($q2->data->where('account_code', $ACC_SLRAT)->first()->value),
+            'slrat3' => $this->ifNegative($q3->data->where('account_code', $ACC_SLRAT)->first()->value),
+            'slraty' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_SLRAT)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value,
-            ),
-            'slratq' => $this->getPercentage(
+            ), 2),
+            'slratq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_SLRAT)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value,
-            ),
-            'lrtb1' => $q1->data->where('account_code', $ACC_LRTB)->first()->value,
-            'lrtb2' => $q2->data->where('account_code', $ACC_LRTB)->first()->value,
-            'lrtb3' => $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            'lrtby' => $this->getPercentage(
+            ), 2),
+            'lrtb1' => $this->ifNegative($q1->data->where('account_code', $ACC_LRTB)->first()->value),
+            'lrtb2' => $this->ifNegative($q2->data->where('account_code', $ACC_LRTB)->first()->value),
+            'lrtb3' => $this->ifNegative($q3->data->where('account_code', $ACC_LRTB)->first()->value),
+            'lrtby' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'lrtbq' => $this->getPercentage(
+            ), 2),
+            'lrtbq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'te1' => $q1->data->where('account_code', $ACC_TE)->first()->value,
-            'te2' => $q2->data->where('account_code', $ACC_TE)->first()->value,
-            'te3' => $q3->data->where('account_code', $ACC_TE)->first()->value,
-            'tey' => $this->getPercentage(
+            ), 2),
+            'te1' => $this->ifNegative($q1->data->where('account_code', $ACC_TE)->first()->value),
+            'te2' => $this->ifNegative($q2->data->where('account_code', $ACC_TE)->first()->value),
+            'te3' => $this->ifNegative($q3->data->where('account_code', $ACC_TE)->first()->value),
+            'tey' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_TE)->first()->value,
                 $q3->data->where('account_code', $ACC_TE)->first()->value,
-            ),
-            'teq' => $this->getPercentage(
+            ), 2),
+            'teq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_TE)->first()->value,
                 $q3->data->where('account_code', $ACC_TE)->first()->value,
-            ),
-            'pijih1' => $q1->data->where('account_code', $ACC_PIJIH)->first()->value,
-            'pijih2' => $q2->data->where('account_code', $ACC_PIJIH)->first()->value,
-            'pijih3' => $q3->data->where('account_code', $ACC_PIJIH)->first()->value,
-            'pijihy' => $this->getPercentage(
+            ), 2),
+            'pijih1' => $this->ifNegative($q1->data->where('account_code', $ACC_PIJIH)->first()->value),
+            'pijih2' => $this->ifNegative($q2->data->where('account_code', $ACC_PIJIH)->first()->value),
+            'pijih3' => $this->ifNegative($q3->data->where('account_code', $ACC_PIJIH)->first()->value),
+            'pijihy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PIJIH)->first()->value,
                 $q3->data->where('account_code', $ACC_PIJIH)->first()->value,
-            ),
-            'pijihq' => $this->getPercentage(
+            ), 2),
+            'pijihq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PIJIH)->first()->value,
                 $q3->data->where('account_code', $ACC_PIJIH)->first()->value,
-            ),
-            'pa1' => $q1->data->where('account_code', $ACC_PA)->first()->value,
-            'pa2' => $q2->data->where('account_code', $ACC_PA)->first()->value,
-            'pa3' => $q3->data->where('account_code', $ACC_PA)->first()->value,
-            'pay' => $this->getPercentage(
+            ), 2),
+            'pa1' => $this->ifNegative($q1->data->where('account_code', $ACC_PA)->first()->value),
+            'pa2' => $this->ifNegative($q2->data->where('account_code', $ACC_PA)->first()->value),
+            'pa3' => $this->ifNegative($q3->data->where('account_code', $ACC_PA)->first()->value),
+            'pay' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PA)->first()->value,
                 $q3->data->where('account_code', $ACC_PA)->first()->value,
-            ),
-            'paq' => $this->getPercentage(
+            ), 2),
+            'paq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PA)->first()->value,
                 $q3->data->where('account_code', $ACC_PA)->first()->value,
-            ),
-            'po1' => $q1->data->where('account_code', $ACC_PO)->first()->value,
-            'po2' => $q2->data->where('account_code', $ACC_PO)->first()->value,
-            'po3' => $q3->data->where('account_code', $ACC_PO)->first()->value,
-            'poy' => $this->getPercentage(
+            ), 2),
+            'po1' => $this->ifNegative($q1->data->where('account_code', $ACC_PO)->first()->value),
+            'po2' => $this->ifNegative($q2->data->where('account_code', $ACC_PO)->first()->value),
+            'po3' => $this->ifNegative($q3->data->where('account_code', $ACC_PO)->first()->value),
+            'poy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PO)->first()->value,
                 $q3->data->where('account_code', $ACC_PO)->first()->value,
-            ),
-            'poq' => $this->getPercentage(
+            ), 2),
+            'poq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PO)->first()->value,
                 $q3->data->where('account_code', $ACC_PO)->first()->value,
-            ),
-            'pno1' => $q1->data->where('account_code', $ACC_PNO)->first()->value,
-            'pno2' => $q2->data->where('account_code', $ACC_PNO)->first()->value,
-            'pno3' => $q3->data->where('account_code', $ACC_PNO)->first()->value,
-            'pnoy' => $this->getPercentage(
+            ), 2),
+            'pno1' => $this->ifNegative($q1->data->where('account_code', $ACC_PNO)->first()->value),
+            'pno2' => $this->ifNegative($q2->data->where('account_code', $ACC_PNO)->first()->value),
+            'pno3' => $this->ifNegative($q3->data->where('account_code', $ACC_PNO)->first()->value),
+            'pnoy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PNO)->first()->value,
                 $q3->data->where('account_code', $ACC_PNO)->first()->value,
-            ),
-            'pnoq' => $this->getPercentage(
+            ), 2),
+            'pnoq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PNO)->first()->value,
                 $q3->data->where('account_code', $ACC_PNO)->first()->value,
-            ),
-            'jp1' => $q1->data->where('account_code', $ACC_JP)->first()->value,
-            'jp2' => $q2->data->where('account_code', $ACC_JP)->first()->value,
-            'jp3' => $q3->data->where('account_code', $ACC_JP)->first()->value,
-            'jpy' => $this->getPercentage(
+            ), 2),
+            'jp1' => $this->ifNegative($q1->data->where('account_code', $ACC_JP)->first()->value),
+            'jp2' => $this->ifNegative($q2->data->where('account_code', $ACC_JP)->first()->value),
+            'jp3' => $this->ifNegative($q3->data->where('account_code', $ACC_JP)->first()->value),
+            'jpy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_JP)->first()->value,
                 $q3->data->where('account_code', $ACC_JP)->first()->value,
-            ),
-            'jpq' => $this->getPercentage(
+            ), 2),
+            'jpq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_JP)->first()->value,
                 $q3->data->where('account_code', $ACC_JP)->first()->value,
-            ),
-            'bo1' => $q1->data->where('account_code', $ACC_BO)->first()->value,
-            'bo2' => $q2->data->where('account_code', $ACC_BO)->first()->value,
-            'bo3' => $q3->data->where('account_code', $ACC_BO)->first()->value,
-            'boy' => $this->getPercentage(
+            ), 2),
+            'bo1' => $this->ifNegative($q1->data->where('account_code', $ACC_BO)->first()->value),
+            'bo2' => $this->ifNegative($q2->data->where('account_code', $ACC_BO)->first()->value),
+            'bo3' => $this->ifNegative($q3->data->where('account_code', $ACC_BO)->first()->value),
+            'boy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_BO)->first()->value,
                 $q3->data->where('account_code', $ACC_BO)->first()->value,
-            ),
-            'boq' => $this->getPercentage(
+            ), 2),
+            'boq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_BO)->first()->value,
                 $q3->data->where('account_code', $ACC_BO)->first()->value,
-            ),
-            'bno1' => $q1->data->where('account_code', $ACC_BNO)->first()->value,
-            'bno2' => $q2->data->where('account_code', $ACC_BNO)->first()->value,
-            'bno3' => $q3->data->where('account_code', $ACC_BNO)->first()->value,
-            'bnoy' => $this->getPercentage(
+            ), 2),
+            'bno1' => $this->ifNegative($q1->data->where('account_code', $ACC_BNO)->first()->value),
+            'bno2' => $this->ifNegative($q2->data->where('account_code', $ACC_BNO)->first()->value),
+            'bno3' => $this->ifNegative($q3->data->where('account_code', $ACC_BNO)->first()->value),
+            'bnoy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_BNO)->first()->value,
                 $q3->data->where('account_code', $ACC_BNO)->first()->value,
-            ),
-            'bnoq' => $this->getPercentage(
+            ), 2),
+            'bnoq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_BNO)->first()->value,
                 $q3->data->where('account_code', $ACC_BNO)->first()->value,
-            ),
-            'jb1' => $q1->data->where('account_code', $ACC_JB)->first()->value,
-            'jb2' => $q2->data->where('account_code', $ACC_JB)->first()->value,
-            'jb3' => $q3->data->where('account_code', $ACC_JB)->first()->value,
-            'jby' => $this->getPercentage(
+            ), 2),
+            'jb1' => $this->ifNegative($q1->data->where('account_code', $ACC_JB)->first()->value),
+            'jb2' => $this->ifNegative($q2->data->where('account_code', $ACC_JB)->first()->value),
+            'jb3' => $this->ifNegative($q3->data->where('account_code', $ACC_JB)->first()->value),
+            'jby' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_JB)->first()->value,
                 $q3->data->where('account_code', $ACC_JB)->first()->value,
-            ),
-            'jbq' => $this->getPercentage(
+            ), 2),
+            'jbq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_JB)->first()->value,
                 $q3->data->where('account_code', $ACC_JB)->first()->value,
-            ),
-            'lrsp1' => $q1->data->where('account_code', $ACC_LRSP)->first()->value,
-            'lrsp2' => $q2->data->where('account_code', $ACC_LRSP)->first()->value,
-            'lrsp3' => $q3->data->where('account_code', $ACC_LRSP)->first()->value,
-            'lrspy' => $this->getPercentage(
+            ), 2),
+            'lrsp1' => $this->ifNegative($q1->data->where('account_code', $ACC_LRSP)->first()->value),
+            'lrsp2' => $this->ifNegative($q2->data->where('account_code', $ACC_LRSP)->first()->value),
+            'lrsp3' => $this->ifNegative($q3->data->where('account_code', $ACC_LRSP)->first()->value),
+            'lrspy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_LRSP)->first()->value,
                 $q3->data->where('account_code', $ACC_LRSP)->first()->value,
-            ),
-            'lrspq' => $this->getPercentage(
+            ), 2),
+            'lrspq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_LRSP)->first()->value,
                 $q3->data->where('account_code', $ACC_LRSP)->first()->value,
-            ),
-            'tpp1' => $q1->data->where('account_code', $ACC_TPP)->first()->value,
-            'tpp2' => $q2->data->where('account_code', $ACC_TPP)->first()->value,
-            'tpp3' => $q3->data->where('account_code', $ACC_TPP)->first()->value,
-            'tppy' => $this->getPercentage(
+            ), 2),
+            'tpp1' => $this->ifNegative($q1->data->where('account_code', $ACC_TPP)->first()->value),
+            'tpp2' => $this->ifNegative($q2->data->where('account_code', $ACC_TPP)->first()->value),
+            'tpp3' => $this->ifNegative($q3->data->where('account_code', $ACC_TPP)->first()->value),
+            'tppy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_TPP)->first()->value,
                 $q3->data->where('account_code', $ACC_TPP)->first()->value,
-            ),
-            'tppq' => $this->getPercentage(
+            ), 2),
+            'tppq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_TPP)->first()->value,
                 $q3->data->where('account_code', $ACC_TPP)->first()->value,
-            ),
-            'lrpb1' => $q1->data->where('account_code', $ACC_LRPB)->first()->value,
-            'lrpb2' => $q2->data->where('account_code', $ACC_LRPB)->first()->value,
-            'lrpb3' => $q3->data->where('account_code', $ACC_LRPB)->first()->value,
-            'lrpby' => $this->getPercentage(
+            ), 2),
+            'lrpb1' => $this->ifNegative($q1->data->where('account_code', $ACC_LRPB)->first()->value),
+            'lrpb2' => $this->ifNegative($q2->data->where('account_code', $ACC_LRPB)->first()->value),
+            'lrpb3' => $this->ifNegative($q3->data->where('account_code', $ACC_LRPB)->first()->value),
+            'lrpby' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_LRPB)->first()->value,
                 $q3->data->where('account_code', $ACC_LRPB)->first()->value,
-            ),
-            'lrpbq' => $this->getPercentage(
+            ), 2),
+            'lrpbq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_LRPB)->first()->value,
                 $q3->data->where('account_code', $ACC_LRPB)->first()->value,
-            ),
-            'jpd1' => $q1->data->where('account_code', $ACC_JPD)->first()->value,
-            'jpd2' => $q2->data->where('account_code', $ACC_JPD)->first()->value,
-            'jpd3' => $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            'jpdy' => $this->getPercentage(
+            ), 2),
+            'jpd1' => $this->ifNegative($q1->data->where('account_code', $ACC_JPD)->first()->value),
+            'jpd2' => $this->ifNegative($q2->data->where('account_code', $ACC_JPD)->first()->value),
+            'jpd3' => $this->ifNegative($q3->data->where('account_code', $ACC_JPD)->first()->value),
+            'jpdy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_JPD)->first()->value,
                 $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            ),
-            'jpdq' => $this->getPercentage(
+            ), 2),
+            'jpdq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_JPD)->first()->value,
                 $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            ),
-            'jn1' => $q1->data->where('account_code', $ACC_JN)->first()->value,
-            'jn2' => $q2->data->where('account_code', $ACC_JN)->first()->value,
-            'jn3' => $q3->data->where('account_code', $ACC_JN)->first()->value,
-            'jny' => $this->getPercentage(
+            ), 2),
+            'jog1' => $this->ifNegative($q1->data->where('account_code', $ACC_JOG)->first()->value),
+            'jog2' => $this->ifNegative($q2->data->where('account_code', $ACC_JOG)->first()->value),
+            'jog3' => $this->ifNegative($q3->data->where('account_code', $ACC_JOG)->first()->value),
+            'jogy' => $this->ifNegative($this->getPercentage(
+                $q1->data->where('account_code', $ACC_JOG)->first()->value,
+                $q3->data->where('account_code', $ACC_JOG)->first()->value,
+            ), 2),
+            'jogq' => $this->ifNegative($this->getPercentage(
+                $q2->data->where('account_code', $ACC_JOG)->first()->value,
+                $q3->data->where('account_code', $ACC_JOG)->first()->value,
+            ), 2),
+            'jn1' => $this->ifNegative($q1->data->where('account_code', $ACC_JN)->first()->value),
+            'jn2' => $this->ifNegative($q2->data->where('account_code', $ACC_JN)->first()->value),
+            'jn3' => $this->ifNegative($q3->data->where('account_code', $ACC_JN)->first()->value),
+            'jny' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_JN)->first()->value,
                 $q3->data->where('account_code', $ACC_JN)->first()->value,
-            ),
-            'jnq' => $this->getPercentage(
+            ), 2),
+            'jnq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_JN)->first()->value,
                 $q3->data->where('account_code', $ACC_JN)->first()->value,
-            ),
-            'slr1' => $q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slr2' => $q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slr3' => $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            'slry' => $this->getPercentage(
+            ), 2),
+            'slr1' => $this->ifNegative($q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slr2' => $this->ifNegative($q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slr3' => $this->ifNegative($q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value),
+            'slry' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_SLRAT)->first()->value + $q1->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'slrq' => $this->getPercentage(
+            ), 2),
+            'slrq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_SLRAT)->first()->value + $q2->data->where('account_code', $ACC_LRTB)->first()->value,
                 $q3->data->where('account_code', $ACC_SLRAT)->first()->value + $q3->data->where('account_code', $ACC_LRTB)->first()->value,
-            ),
-            'pd1' => $q1->data->where('account_code', $ACC_PDG)->first()->value + $q1->data->where('account_code', $ACC_JPD)->first()->value,
-            'pd2' => $q2->data->where('account_code', $ACC_PDG)->first()->value + $q2->data->where('account_code', $ACC_JPD)->first()->value,
-            'pd3' => $q3->data->where('account_code', $ACC_PDG)->first()->value + $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            'pdy' => $this->getPercentage(
+            ), 2),
+            'pd1' => $this->ifNegative($q1->data->where('account_code', $ACC_PDG)->first()->value + $q1->data->where('account_code', $ACC_JPD)->first()->value),
+            'pd2' => $this->ifNegative($q2->data->where('account_code', $ACC_PDG)->first()->value + $q2->data->where('account_code', $ACC_JPD)->first()->value),
+            'pd3' => $this->ifNegative($q3->data->where('account_code', $ACC_PDG)->first()->value + $q3->data->where('account_code', $ACC_JPD)->first()->value),
+            'pdy' => $this->ifNegative($this->getPercentage(
                 $q1->data->where('account_code', $ACC_PDG)->first()->value + $q1->data->where('account_code', $ACC_JPD)->first()->value,
                 $q3->data->where('account_code', $ACC_PDG)->first()->value + $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            ),
-            'pdq' => $this->getPercentage(
+            ), 2),
+            'pdq' => $this->ifNegative($this->getPercentage(
                 $q2->data->where('account_code', $ACC_PDG)->first()->value + $q2->data->where('account_code', $ACC_JPD)->first()->value,
                 $q3->data->where('account_code', $ACC_PDG)->first()->value + $q3->data->where('account_code', $ACC_JPD)->first()->value,
-            ),
-            'cr1' => $this->saveDivider($q1->data->where('account_code', $ACC_PDG)->first()->value, $q1->data->where('account_code', $ACC_LL)->first()->value),
-            'cr2' => $this->saveDivider($q2->data->where('account_code', $ACC_PDG)->first()->value, $q2->data->where('account_code', $ACC_LL)->first()->value),
-            'cr3' => $this->saveDivider($q3->data->where('account_code', $ACC_PDG)->first()->value, $q3->data->where('account_code', $ACC_LL)->first()->value),
-            'cry' => $this->getPercentage(
+            ), 2),
+            'cr1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_PDG)->first()->value, $q1->data->where('account_code', $ACC_LL)->first()->value)),
+            'cr2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_PDG)->first()->value, $q2->data->where('account_code', $ACC_LL)->first()->value)),
+            'cr3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_PDG)->first()->value, $q3->data->where('account_code', $ACC_LL)->first()->value)),
+            'cry' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_PDG)->first()->value, $q1->data->where('account_code', $ACC_LL)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_PDG)->first()->value, $q3->data->where('account_code', $ACC_LL)->first()->value),
-            ),
-            'crq' => $this->getPercentage(
+            ), 2),
+            'crq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_PDG)->first()->value, $q2->data->where('account_code', $ACC_LL)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_PDG)->first()->value, $q3->data->where('account_code', $ACC_LL)->first()->value),
-            ),
-            'der1' => $this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value),
-            'der2' => $this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value),
-            'der3' => $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            'dery' => $this->getPercentage(
+            ), 2),
+            'der1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value)),
+            'der2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value)),
+            'der3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value)),
+            'dery' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            ),
-            'derq' => $this->getPercentage(
+            ), 2),
+            'derq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            ),
-            'dar1' => $this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value),
-            'dar2' => $this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value),
-            'dar3' => $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            'dary' => $this->getPercentage(
+            ), 2),
+            'dar1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value)),
+            'dar2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value)),
+            'dar3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value)),
+            'dary' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_TL)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            ),
-            'darq' => $this->getPercentage(
+            ), 2),
+            'darq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_TL)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_TL)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            ),
-            'roa1' => $this->saveDivider($q1->data->where('account_code', $ACC_LRPB)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value),
-            'roa2' => $this->saveDivider($q2->data->where('account_code', $ACC_LRPB)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value),
-            'roa3' => $this->saveDivider($q3->data->where('account_code', $ACC_LRPB)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            'roay' => $this->getPercentage(
+            ), 2),
+            'roa1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_LRPB)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value)),
+            'roa2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_LRPB)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value)),
+            'roa3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_LRPB)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value)),
+            'roay' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_LRPB)->first()->value, $q1->data->where('account_code', $ACC_TA)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_LRPB)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            ),
-            'roaq' => $this->getPercentage(
+            ), 2),
+            'roaq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_LRPB)->first()->value, $q2->data->where('account_code', $ACC_TA)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_LRPB)->first()->value, $q3->data->where('account_code', $ACC_TA)->first()->value),
-            ),
-            'roe1' => $this->saveDivider($q1->data->where('account_code', $ACC_LRTB)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value),
-            'roe2' => $this->saveDivider($q2->data->where('account_code', $ACC_LRTB)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value),
-            'roe3' => $this->saveDivider($q3->data->where('account_code', $ACC_LRTB)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            'roey' => $this->getPercentage(
+            ), 2),
+            'roe1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_LRTB)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value)),
+            'roe2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_LRTB)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value)),
+            'roe3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_LRTB)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value)),
+            'roey' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_LRTB)->first()->value, $q1->data->where('account_code', $ACC_TE)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_LRTB)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            ),
-            'roeq' => $this->getPercentage(
+            ), 2),
+            'roeq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_LRTB)->first()->value, $q2->data->where('account_code', $ACC_TE)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_LRTB)->first()->value, $q3->data->where('account_code', $ACC_TE)->first()->value),
-            ),
-            'bopo1' => $this->saveDivider($q1->data->where('account_code', $ACC_BO)->first()->value, $q1->data->where('account_code', $ACC_PO)->first()->value),
-            'bopo2' => $this->saveDivider($q2->data->where('account_code', $ACC_BO)->first()->value, $q2->data->where('account_code', $ACC_PO)->first()->value),
-            'bopo3' => $this->saveDivider($q3->data->where('account_code', $ACC_BO)->first()->value, $q3->data->where('account_code', $ACC_PO)->first()->value),
-            'bopoy' => $this->getPercentage(
+            ), 2),
+            'bopo1' => $this->ifNegative($this->saveDivider($q1->data->where('account_code', $ACC_BO)->first()->value, $q1->data->where('account_code', $ACC_PO)->first()->value)),
+            'bopo2' => $this->ifNegative($this->saveDivider($q2->data->where('account_code', $ACC_BO)->first()->value, $q2->data->where('account_code', $ACC_PO)->first()->value)),
+            'bopo3' => $this->ifNegative($this->saveDivider($q3->data->where('account_code', $ACC_BO)->first()->value, $q3->data->where('account_code', $ACC_PO)->first()->value)),
+            'bopoy' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q1->data->where('account_code', $ACC_BO)->first()->value, $q1->data->where('account_code', $ACC_PO)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_BO)->first()->value, $q3->data->where('account_code', $ACC_PO)->first()->value),
-            ),
-            'bopoq' => $this->getPercentage(
+            ), 2),
+            'bopoq' => $this->ifNegative($this->getPercentage(
                 $this->saveDivider($q2->data->where('account_code', $ACC_BO)->first()->value, $q2->data->where('account_code', $ACC_PO)->first()->value),
                 $this->saveDivider($q3->data->where('account_code', $ACC_BO)->first()->value, $q3->data->where('account_code', $ACC_PO)->first()->value),
-            ),
+            ), 2),
+            'laba_rugi_condition' => ($q3->data->where('account_code', $ACC_LRPB)->first()->value) < 0 ? 'rugi bersih' : 'laba bersih',
+            'ta32' => ($q3->data->where('account_code', $ACC_TA)->first()->value - $q2->data->where('account_code', $ACC_TA)->first()->value),
+            'ta32_condition' => ($q3->data->where('account_code', $ACC_TA)->first()->value - $q2->data->where('account_code', $ACC_TA)->first()->value) < 0 ? 'turun' : 'naik',
+            'tl32' => ($q3->data->where('account_code', $ACC_TL)->first()->value - $q2->data->where('account_code', $ACC_TL)->first()->value),
+            'tl32_condition' => ($q3->data->where('account_code', $ACC_TL)->first()->value - $q2->data->where('account_code', $ACC_TL)->first()->value) < 0 ? 'turun' : 'naik',
+            'te32' => ($q3->data->where('account_code', $ACC_TE)->first()->value - $q2->data->where('account_code', $ACC_TE)->first()->value),
+            'te32_condition' => ($q3->data->where('account_code', $ACC_TE)->first()->value - $q2->data->where('account_code', $ACC_TE)->first()->value) < 0 ? 'turun' : 'naik',
+            'bo32' => ($q3->data->where('account_code', $ACC_BO)->first()->value - $q2->data->where('account_code', $ACC_BO)->first()->value),
+            'bo32_condition' => ($q3->data->where('account_code', $ACC_BO)->first()->value - $q2->data->where('account_code', $ACC_BO)->first()->value) < 0 ? 'turun' : 'naik',
+            'po32' => ($q3->data->where('account_code', $ACC_PO)->first()->value - $q2->data->where('account_code', $ACC_PO)->first()->value),
+            'po32_condition' => ($q3->data->where('account_code', $ACC_PO)->first()->value - $q2->data->where('account_code', $ACC_PO)->first()->value) < 0 ? 'turun' : 'naik',
+            'report_periode' => strftime("%d %B %Y", strtotime($q3->periode)),
+            'report_date' => strftime("%d %B %Y", strtotime($q3->reported_at)),
+            // 'report_time_condition' => (new DateTime(strtotime($q3->periode)))->diff(strtotime($q3->reported_at)),
         );
         
         $file = Storage::path('office/LHA_Template.docx');

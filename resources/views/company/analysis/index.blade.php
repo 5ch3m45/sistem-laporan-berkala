@@ -2,7 +2,7 @@
 @section('content')
 <div class="container body">
     <div class="main_container">
-        <x-sidenav companyid="{{ $company->id }}" active="laporan" />
+        <x-sidenav companyid="{{ $company->id }}" active="analisis" />
         <x-topnav />
         <div class="right_col" role="main">
             <div class="row">
