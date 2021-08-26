@@ -18,7 +18,12 @@ use App\Http\Controllers\ExportWordController;
 |
 */
 
-require(__DIR__.'/subroutes/auth.php');
+
+Route::get( '/masuk', [AuthController::class, 'index'])->name('login');
+Route::post('/masuk', [AuthController::class, 'login']);
+Route::post('/daftar', [AuthController::class, 'register'])->name('register');
+
+Route::get( '/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
   Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
   require(__DIR__.'/subroutes/analysis.php');
@@ -28,9 +33,7 @@ Route::middleware(['auth'])->group(function () {
   require(__DIR__.'/subroutes/notes.php');
   require(__DIR__.'/subroutes/reports.php');
   require(__DIR__.'/subroutes/stats.php');
+  Route::get('/perusahaan/{company}/analisis/export/word', [AnalysisController::class, 'exportWord']);
 });
 
 Route::get('export-word', [ExportWordController::class, 'index']);
-
-
-Route::get('/perusahaan/{company}/export-word', [AnalysisController::class, 'exportWord']);

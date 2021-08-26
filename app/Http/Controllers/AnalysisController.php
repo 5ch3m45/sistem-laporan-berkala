@@ -183,6 +183,9 @@ class AnalysisController extends Controller {
             'company_member_position_4' => count($company_member) == 4 ? $company_member[3]->position : '',
             'quarter' => $this->numberToRoman($q3->quarter),
             'year' => $q3->year,
+            'q1' => $this->numberToRoman($q1->quarter).' '.$q1->year,
+            'q2' => $this->numberToRoman($q2->quarter).' '.$q2->year,
+            'q3' => $this->numberToRoman($q3->quarter).' '.$q3->year,
             'ksk1' => $this->ifNegative($q1->data->where('account_code', $ACC_KSK)->first()->value),
             'ksk2' => $this->ifNegative($q2->data->where('account_code', $ACC_KSK)->first()->value),
             'ksk3' => $this->ifNegative($q3->data->where('account_code', $ACC_KSK)->first()->value),
@@ -592,15 +595,14 @@ class AnalysisController extends Controller {
             'po32_condition' => ($q3->data->where('account_code', $ACC_PO)->first()->value - $q2->data->where('account_code', $ACC_PO)->first()->value) < 0 ? 'turun' : 'naik',
             'report_periode' => strftime("%d %B %Y", strtotime($q3->periode)),
             'report_date' => strftime("%d %B %Y", strtotime($q3->reported_at)),
-            // 'report_time_condition' => (new DateTime(strtotime($q3->periode)))->diff(strtotime($q3->reported_at)),
+            'report_time_condition' => strtotime($q3->periode) - strtotime($q3->reported_at) < 0 ? 'belum' : 'telah',
         );
         
         $file = Storage::path('office/LHA_Template.docx');
         $template = new TemplateProcessor($file);
-
-        foreach ($data_to_write as $key => $value) 
-            $template->setValue($key, $value);
-        
-        return $template->saveAs('Lol.docx');
+        $template->setValues($data_to_write);
+        header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        header('Content-Disposition: attachment; filename="Analisis Tahunan Triwulan '.$this->numberToRoman($q3->quarter).' '.$q3->year.' '.$company->name.'.docx"');
+        return $template->saveAs('php://output');
     }
 }

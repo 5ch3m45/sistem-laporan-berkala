@@ -11,7 +11,7 @@ use App\Models\User;
 class AuthController extends Controller
 {
     public function index() {
-        return view('auth'); // tampilkan halaman login
+        return view('auth.login'); // tampilkan halaman login
     }
 
     public function login(Request $request) {

@@ -7,15 +7,18 @@ use Illuminate\Http\Request;
 use App\Models\Company;
 use App\Models\File;
 use App\Models\Report;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
   public function index()
   {
-    $company_total = Company::count();
+    $company_count = Company::count();
+    $file_count = File::count();
+    $report_count = Report::count();
+    $user_count = User::count();
+
     $last_companies = Company::orderByDesc('id')->limit(10)->get();
-    $last_files = File::orderByDesc('id')->limit(10)->get();
-    $last_reports = Report::orderByDesc('id')->limit(10)->get();
-    return view('index', compact('company_total' ,'last_companies', 'last_files', 'last_reports'));
+    return view('index', compact('company_count', 'file_count', 'report_count', 'user_count', 'last_companies'));
   }
 }

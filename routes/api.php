@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\v1\AnalysisController;
+use App\Http\Controllers\API\v1\CompanyReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,8 +23,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::prefix('v1')->group(function () {
-    Route::get('/perusahaan/{company}/chart', [StatController::class, 'companyStat']);
-    Route::get('/perusahaan/{company}/analyze', [AnalysisController::class, 'companyAnalysis']);
-});
+Route::get('report-data', [CompanyReportController::class, 'show']);
+
+// Route::prefix('v1')->group(function () {
+//     Route::get('/perusahaan/{company}/chart', [StatController::class, 'companyStat']);
+//     Route::get('/perusahaan/{company}/analyze', [AnalysisController::class, 'companyAnalysis']);
+// });
 

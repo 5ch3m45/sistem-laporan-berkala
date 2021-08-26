@@ -12,14 +12,49 @@ use Illuminate\Http\Request;
 
 class CompanyReportController extends Controller
 {
-    public function index(Company $company, Request $request) {
-        $company_report = CompanyReport::query();
+    public function show(Request $request) {
+        $callback_data = 'data';
+
+        $report = Report::where('company_id', $request->company_id);
+
+        if(isset($request->year)) {
+            $report = $report->where('year', $request->year);
+        }
+
+        if(isset($request->quarter)) {
+            $report = $report->where('quarter', $request->quarter);
+        }
+
+        if(isset($request->from_year)) {
+            $report = $report->where('year', '>=', $request->from_year);
+        }
+
+        if(isset($request->from_quarter)) {
+            $report = $report->where('quarter', '>=', $request->from_quarter);
+        }
+
+        if(isset($request->to_year)) {
+            $report = $report->where('year', '<=', $request->to_year);
+        }
+
+        if(isset($request->to_quarter)) {
+            $report = $report->where('quarter', '<=', $request->to_quarter);
+        }
+
+        if(isset($request->account_code)) {
+            $callback_data = ['data' => function($q) use($request) {
+                $q->where('account_code', $request->account_code);
+            }];
+        }
+
+        $report = $report->orderByDesc('year')->orderByDesc('quarter')->with($callback_data);
         
-        if($request->has('account')) {
-            $company_report = $company_report->where('account_code', $request->account);
+        if(isset($request->limit)) {
+            $report = $report->limit($request->limit);
         }
         
-        $company_report = $company_report->get();
-        return response()->json($company_report, 200);
+        $report = $report->get();
+        return response()->json(compact('report'), 200);
+        
     }
 }

@@ -14,7 +14,10 @@ class CompanyReport extends Model
       'account_code',
       'value'
     ];
-
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
     protected $attributes = [
       'value' => 0
     ];

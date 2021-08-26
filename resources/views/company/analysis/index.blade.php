@@ -80,6 +80,9 @@
                             <div class="clearfix"></div>
                         </div>
                         <div class="x_content">
+                            <div class="mb-3 d-flex justify-content-end">
+                                <a id="exportWordButton" href="/perusahaan/{{ $company->id }}/analisis/export/word?year={{ $latest_report->year }}&quarter={{ $latest_report->quarter }}" class="btn btn-sm btn-primary text-light">Export Laporan Ms Office</a>
+                            </div>
                             <div class="table-responsive">
                                 <table class="table table-border table-hover" style="font-size:.7rem;">
                                     @php
@@ -623,6 +626,9 @@
                         'quarter': quarter
                     }
                 });
+                if(year !== null & quarter !== null) {
+                    $('#exportWordButton').attr('href', `/perusahaan/${company_id}/analisis/export/word?year=${year}&quarter=${quarter}`)
+                }
                 return response.data
             } catch (error) {
                 $('#dataNotEnoughAlert').toggleClass('d-none')

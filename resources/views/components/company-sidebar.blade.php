@@ -1,63 +1,70 @@
-<div>
-  <div class="card mb-3 border-0 shadow-secondary">
-    <div class="card-body">
-      <p class="fw-bold">SUBMENU</p>
-      <hr>
-      <ul style="list-style-type: none; padding-left: .5rem">
-        @if ($cid)
-        <li>
-          <a href="{{ route('note', ['company' => $cid]) }}" @if ($active == 'company_notes') class="disabled text-primary" @endif>Catatan</a>
-        </li>
-        <li>
-          <a href="{{ route('report', ['company' => $cid]) }}" @if ($active == 'company_reports') class="disabled text-primary" @endif>Data Laporan</a>
-        </li>
-        <li>
-          <a href="{{ route('company_file', ['company' => $cid]) }}" @if ($active == 'company_files') class="disabled text-primary" @endif>File</a>
-        </li>
-        <li>
-          <a href="{{ route('show_company', ['company' => $cid]) }}" @if ($active == 'company_index') class="disabled text-primary" @endif>Informasi</a>
-        </li>
-        <li>
-          <a href="{{ route('stats', ['company' => $cid]) }}" @if ($active == 'company_stats') class="disabled text-primary" @endif>Statistik</a>
-        </li>
-        @else
-        <li>
-          <a href="{{ route('all_company') }}" class="">Semua Perusahaan</a>
-        </li>
-        @endif
-      </ul>
+<div class="row">
+    <div class="col-12 mb-2">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title">Informasi Perusahaan</div>
+                <div class="mb-2">
+                    <i class="fe fe-map"></i>
+                    Regional: <strong>{{ $company->regional }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-mail"></i>
+                    Email: <strong>{{ $company->email }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-phone"></i>
+                    Telefon: <strong>{{ $company->phone }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-flag"></i>
+                    Tgl. Pendirian: <strong>{{ $company->birthdate }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-shield"></i>
+                    Izin Usaha: <strong>{{ $company->lic_number }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-shield"></i>
+                    Tgl. Izin: <strong>{{ $company->lic_date }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-percent"></i>
+                    NPWP: <strong>{{ $company->tax_number }}</strong>
+                </div>
+
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="card mb-3 border-0 shadow-secondary">
-    <div class="card-body">
-      <p class="fw-bold">BARU</p>
-      <hr>
-      <ul style="list-style-type: none; padding-left: .5rem">
-        <li>
-          <a href="{{ route('create_company') }}" class="">Perusahaan baru</a>
-        </li>
-        @if ($cid)
-        <li>
-          <a href="{{ route('upload_file', ['company' => $cid]) }}" @if ($active == 'company_file_upload') class="disabled text-primary" @endif>File baru</a>
-        </li>
-        <li>
-          <a href="{{ route('create_note', ['company' => $cid]) }}" @if ($active == 'company_note_create') class="disabled text-primary" @endif>Catatan baru</a>
-        </li>
-        @endif
-      </ul>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div>
+                    <div class="list-group list-group-transparent mb-3">
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'analisis-tahunan' ? 'active' : '' }}" href="/perusahaan/1/analisis-tahunan">
+                            Analisis Tahunan
+                        </a>
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'berkas' ? 'active' : '' }}" href="/perusahaan/1/berkas">
+                            Berkas
+                            <small class="text-muted ms-auto">{{ $file_count }}</small>
+                        </a>
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'catatan' ? 'active' : '' }}" href="/perusahaan/1/catatan">
+                            Catatan
+                            <small class="text-muted ms-auto">{{ $note_count }}</small>
+                        </a>
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'dewan' ? 'active' : '' }}" href="/perusahaan/1/dewan">
+                            Dewan Direksi & Komisaris
+                            <small class="text-muted ms-auto">{{ $employe_count }}</small>
+                        </a>
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'laporan' ? 'active' : '' }}" href="/perusahaan/1/laporan">
+                            Laporan
+                            <small class="text-muted ms-auto">{{ $report_count }}</small>
+                        </a>
+                        <a class="list-group-item list-group-item-action d-flex justify-content-between {{ $active == 'statistik' ? 'active' : '' }}" href="/perusahaan/1">
+                            Statistik
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  @if ($cid)
-  <div class="card mb-3 border-0 shadow-secondary">
-    <div class="card-body">
-      <p class="fw-bold">UNDUH FILE</p>
-      <hr>
-      <ul style="list-style-type: none; padding-left: .5rem">
-        <li>
-          <a href="/perusahaan/{{ $cid }}/export-excel" class="">Laporan</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-  @endif
 </div>
