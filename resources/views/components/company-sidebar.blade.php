@@ -67,4 +67,7 @@
             </div>
         </div>
     </div>
+    <div class="col-12">
+        <a href="{{ route('edit_company', ['company' => $company->id]) }}" class="btn btn-primary w-100"><i class="fe fe-edit-2"></i> Ubah Informasi Perusahaan</a>
+    </div>
 </div>
