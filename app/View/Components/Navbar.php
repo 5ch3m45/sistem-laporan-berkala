@@ -6,14 +6,15 @@ use Illuminate\View\Component;
 
 class Navbar extends Component
 {
+    public $active;
     /**
      * Create a new component instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($active = null)
     {
-        //
+        $this->active = $active;
     }
 
     /**
@@ -23,6 +24,6 @@ class Navbar extends Component
      */
     public function render()
     {
-        return view('components.navbar');
+        return view('components.navbar', ['active' => $this->active]);
     }
 }
