@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCompanyRequest;
 use App\Models\Company;
+use App\Models\File;
+use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $companies = Company::orderBy('name')->paginate(25); // get data perusahaan, order by Name, perpage 25 item (keyword: pagination)
+        $companies = Company::orderBy('name');
+        if(isset($request->name)) {
+            $companies = $companies->where('name', 'like', '%'.$request->name.'%');
+        }
+        $companies = $companies->paginate(25); // get data perusahaan, order by Name, perpage 25 item (keyword: pagination)
         return view('company.index', compact('companies')); // tampilkan view company index
     }
 
@@ -37,8 +43,29 @@ class CompanyController extends Controller
 
     public function update(Company $company, StoreCompanyRequest $request)
     {
-        $company->update($request->all()); // simpan update ke database dengan semua parameter request (keyword: eloquent update)
-        return redirect()->route('show_company', ['company' => $company->id]) // redirect ke route show_company
-            ->with(['success' => 'Profil perusahaan berhasil diubah']); // dengan message success
+        if ($company->update($request->all())) {
+            return back()->with('success', 'Profil perusahaan berhasil diubah'); // dengan message success
+        }
+        return back()->with('error', 'Gagal. Coba lagi.');
+    }
+
+    public function analysis(Company $company) {
+        return view('company.analysis', compact('company'));
+    }
+    
+    public function employes(Company $company) {
+        return view('company.employes', compact('company'));
+    }
+
+    public function files(Company $company) {
+        return view('company.files', compact('company'));
+    }
+
+    public function reports(Company $company) {
+        return view('company.reports', compact('company'));
+    }
+
+    public function notes(Company $company) {
+        return view('company.notes', compact('company'));
     }
 }
