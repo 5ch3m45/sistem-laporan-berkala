@@ -12,19 +12,19 @@
             <div class="col-lg order-lg-first">
                 <ul class="nav nav-tabs border-0 flex-column flex-lg-row">
                     <li class="nav-item">
-                        <a href="{{ route('dashboard') }}" class="nav-link active"><i class="fe fe-home"></i> Dashboard</a>
+                        <a href="{{ route('dashboard') }}" class="nav-link {{ $active == 'dashboard' ? 'active' : '' }}"><i class="fe fe-home"></i> Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('company') }}" class="nav-link"><i class="fe fe-briefcase"></i> Perusahaan</a>
+                        <a href="{{ route('company') }}" class="nav-link {{ $active == 'perusahaan' ? 'active' : '' }}"><i class="fe fe-briefcase"></i> Perusahaan</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('company') }}" class="nav-link"><i class="fe fe-folder"></i> Berkas</a>
+                        <a href="{{ route('company') }}" class="nav-link {{ $active == 'berkas' ? 'active' : '' }}"><i class="fe fe-folder"></i> Berkas</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('company') }}" class="nav-link"><i class="fe fe-file-text"></i> Laporan</a>
+                        <a href="{{ route('company') }}" class="nav-link {{ $active == 'laporan' ? 'active' : '' }}"><i class="fe fe-file-text"></i> Laporan</a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('company') }}" class="nav-link"><i class="fe fe-feather"></i> Catatan</a>
+                        <a href="{{ route('company') }}" class="nav-link {{ $active == 'catatan' ? 'active' : '' }}"><i class="fe fe-feather"></i> Catatan</a>
                     </li>
                 </ul>
             </div>

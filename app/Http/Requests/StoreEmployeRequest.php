@@ -24,6 +24,7 @@ class StoreEmployeRequest extends FormRequest
     public function rules()
     {
         return [
+            'company_id' => 'required',
             'name' => 'required',
             'position' => 'required',
             'email' => 'email',

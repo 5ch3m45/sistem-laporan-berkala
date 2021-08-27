@@ -4,7 +4,7 @@
 <div class="page">
     <div class="page-main">
         <x-header />
-        <x-navbar />
+        <x-navbar active="perusahaan" />
         <div class="my-3 my-md-5">
             <div class="container-fluid">
                 <div class="page-header">
@@ -21,13 +21,13 @@
                         <!-- Page title actions -->
                         <div class="ml-auto">
                             <div class="btn-list">
-                                <a href="#" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#modal-report">
+                                <button type="button" class="btn btn-primary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                     <i class="fe fe-plus"></i>
                                     Perusahaan Baru
-                                </a>
-                                <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal" data-bs-target="#modal-report" aria-label="Create new report">
+                                </button>
+                                <button type="button" class="btn btn-primary d-sm-none" data-bs-toggle="modal" data-bs-target="#exampleModal">
                                     <i class="fe fe-plus"></i>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -36,14 +36,10 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <form action="" class="d-flex flex-row mt-2">
+                                <form class="d-flex flex-row mt-2">
                                     <div class="form-group mr-2">
                                         <label class="form-label">Cari</label>
-                                        <input type="text" class="form-control" name="example-password-input" placeholder="Password..">
-                                    </div>
-                                    <div class="form-group mr-2">
-                                        <label class="form-label">Urutkan berdasarkan</label>
-                                        <input type="text" class="form-control" name="example-password-input" placeholder="Password..">
+                                        <input type="text" class="form-control" name="name" placeholder="Nama perusahaan">
                                     </div>
                                     <div class="form-group mr-2">
                                         <label class="form-label">&nbsp;</label>
@@ -58,6 +54,7 @@
                                             <th class="w-1">Kode</th>
                                             <th>Nama</th>
                                             <th>Regional</th>
+                                            <th>&nbsp;</th>
                                             <th>CR</th>
                                             <th>DER</th>
                                             <th>DAR</th>
@@ -65,57 +62,55 @@
                                             <th>RoE</th>
                                             <th>BOPO</th>
                                             <th>&nbsp;</th>
-                                            <th>&nbsp;</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @if (count($companies) > 0)
-                                            @foreach ($companies as $company)
-                                            <tr>
-                                                <td><span class="text-muted">{{ $company->id }}</span></td>
-                                                <td><a href="{{ route('show_company', ['company' => $company->id]) }}" class="text-inherit text-primary">{{ $company->name }}</a></td>
-                                                <td>
-                                                    {{ $company->regional }}
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none;">39.99%</abbr>
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none; font-size: .8rem">39.99%</abbr>
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none;">39.99%</abbr>
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none;">39.99%</abbr>
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none;">39.99%</abbr>
-                                                </td>
-                                                <td>
-                                                    <abbr title="QtQ" style="text-decoration:none;">39.99%</abbr><br/>
-                                                    <abbr title="YoY" style="text-decoration:none;">39.99%</abbr>
-                                                </td>
-                                                <td class="text-right">
-                                                    <a href="javascript:void(0)" class="btn btn-secondary btn-sm">Manage</a>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown">Actions</button>
-                                                    </div>
-                                                </td>
-                                                <td>
-                                                    <a class="icon" href="javascript:void(0)">
-                                                        <i class="fe fe-edit"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            @endforeach
+                                        @foreach ($companies as $company)
+                                        <tr>
+                                            <td><span class="text-muted">{{ $company->id }}</span></td>
+                                            <td><a href="{{ route('show_company', ['company' => $company->id]) }}" class="text-inherit text-primary">{{ $company->name }}</a></td>
+                                            <td>
+                                                {{ $company->regional }}
+                                            </td>
+                                            <td>
+                                                QtQ :<br/>YoY :
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->current_ratio['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->current_ratio['yoy'] }}%</abbr>
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->debt_to_equity['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->debt_to_equity['yoy'] }}%</abbr>
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->debt_to_asset['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->debt_to_asset['yoy'] }}%</abbr>
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->return_on_asset['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->return_on_asset['yoy'] }}%</abbr>
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->return_on_equity['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->return_on_equity['yoy'] }}%</abbr>
+                                            </td>
+                                            <td class="text-right">
+                                                <abbr title="QtQ" style="text-decoration:none;">{{ $company->bopo['qtq'] }}%</abbr><br />
+                                                <abbr title="YoY" style="text-decoration:none;">{{ $company->bopo['yoy'] }}%</abbr>
+                                            </td>
+                                            <td>
+                                                <a href="{{ route('show_company', ['company' => $company]) }}" class="icon">
+                                                    <i class="fe fe-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        @endforeach
                                         @else
-                                            <tr><td colspan="11">Belum ada data..</td></tr>
+                                        <tr>
+                                            <td colspan="11">Belum ada data..</td>
+                                        </tr>
                                         @endif
                                     </tbody>
                                 </table>
@@ -186,5 +181,90 @@
             </div>
         </div>
     </footer>
+</div>
+<div class="modal modal-blur fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen modal-dialog-scrollable">
+        <div class="modal-content px-4">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Tambah Perusahaan Baru</h5>
+                <button type="button" class="btn btn-sm btn-white" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('create_company') }}" method="post">
+                    @csrf
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="inputName" class="form-label">Nama perusahaan</label>
+                            <input type="text" name="name" id="inputName" class="form-control">
+                            @error('name')
+                            {{ $message }}
+                            @enderror
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label for="inputRegional" class="form-label">Wil. Operasional</label>
+                            <input type="text" name="regional" required id="inputRegional" class="form-control">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label for="inputOutlet" class="form-label">Jumlah Unit Layanan (outlet)</label>
+                            <input type="number" name="outlet" required id="inputOutlet" class="form-control">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label for="inputPostalcode" class="form-label">Kodepos</label>
+                            <input type="text" name="add_postalcode" required id="inputPostalcode" class="form-control">
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label for="inputProvince" class="form-label">Provinsi</label>
+                            <input type="text" name="add_province" required id="inputProvince" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputRegency" class="form-label">Kabupaten/Kota</label>
+                            <input type="text" name="add_regency" required id="inputRegency" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputSubdistrict" class="form-label">Kecamatan</label>
+                            <input type="text" name="add_subdistrict" required id="inputSubdistrict" class="form-control">
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label for="inputVillage" class="form-label">Kelurahan/Desa</label>
+                            <input type="text" name="add_village" required id="inputVillage" class="form-control">
+                        </div>
+                        <div class="col-md-7 mb-3">
+                            <label for="inputRoad" class="form-label">Alamat</label>
+                            <input type="text" name="add_road" required id="inputRoad" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputEmail" class="form-label">Email</label>
+                            <input type="text" name="email" required id="inputEmail" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputPhone" class="form-label">Telefon</label>
+                            <input type="text" name="phone" required id="inputPhone" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputBirthdate" class="form-label">Tanggal pendirian</label>
+                            <input type="date" name="birthdate" required id="inputBirthdate" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputTax" class="form-label">NPWP</label>
+                            <input type="text" name="tax_number" required id="inputTax" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputLicenseNumber" class="form-label">Nomor izin usaha</label>
+                            <input type="text" name="lic_number" required id="inputLicenseNumber" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="inputLicenseDate" class="form-label">Tanggal Izin usaha</label>
+                            <input type="date" name="lic_date" required id="inputLicenseDate" class="form-control">
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-end">
+                        <a href="/perusahaan" class="btn btn-light shadow-secondary me-3">Batal</a>
+                        <input type="submit" class="btn btn-primary text-light shadow-primary" value="Simpan">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection

@@ -2,19 +2,20 @@
 
 namespace App\View\Components;
 
+use App\Models\Report;
 use Illuminate\View\Component;
 
-class Navbar extends Component
+class ReportSidebar extends Component
 {
-    public $active;
+    public $report;
     /**
      * Create a new component instance.
      *
      * @return void
      */
-    public function __construct($active = null)
+    public function __construct(Report $report)
     {
-        $this->active = $active;
+        $this->report = $report;
     }
 
     /**
@@ -24,6 +25,7 @@ class Navbar extends Component
      */
     public function render()
     {
-        return view('components.navbar', ['active' => $this->active]);
+        $report = $this->report;
+        return view('components.report-sidebar', compact('report'));
     }
 }

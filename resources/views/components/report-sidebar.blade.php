@@ -2,40 +2,48 @@
     <div class="col-12 mb-2">
         <div class="card">
             <div class="card-body">
-                <div class="card-title">Informasi Perusahaan</div>
+                <div class="card-title">Informasi Laporan Triwulan</div>
                 <div class="mb-2">
-                    <i class="fe fe-map"></i>
-                    Regional: <strong>{{ $company->regional }}</strong>
+                    <i class="fe fe-briefcase"></i>
+                    Perusahaan: <a class="text-dark" href="{{ route('show_company', ['company' => $report->company_id]) }}"><strong>{{ $report->company->name }}</strong></a>
                 </div>
                 <div class="mb-2">
-                    <i class="fe fe-mail"></i>
-                    Email: <strong>{{ $company->email }}</strong>
+                    <i class="fe fe-bookmark"></i>
+                    Versi: <strong>{{ $report->version }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-calendar"></i>
+                    Tahun: <strong>{{ $report->year }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-sun"></i>
+                    Triwulan: <strong>{{ $report->quarter }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-calendar"></i>
+                    Periode: <strong>{{ $report->periode }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-calendar"></i>
+                    Tgl. Pelaporan: <strong>{{ $report->reported_at }}</strong>
+                </div>
+                <div class="mb-2">
+                    <i class="fe fe-user"></i>
+                    Contact Person: <strong>{{ $report->cp_name }}</strong>
                 </div>
                 <div class="mb-2">
                     <i class="fe fe-phone"></i>
-                    Telefon: <strong>{{ $company->phone }}</strong>
+                    Telefon: <strong>{{ $report->cp_phone }}</strong>
                 </div>
                 <div class="mb-2">
-                    <i class="fe fe-flag"></i>
-                    Tgl. Pendirian: <strong>{{ $company->birthdate }}</strong>
-                </div>
-                <div class="mb-2">
-                    <i class="fe fe-shield"></i>
-                    Izin Usaha: <strong>{{ $company->lic_number }}</strong>
-                </div>
-                <div class="mb-2">
-                    <i class="fe fe-shield"></i>
-                    Tgl. Izin: <strong>{{ $company->lic_date }}</strong>
-                </div>
-                <div class="mb-2">
-                    <i class="fe fe-percent"></i>
-                    NPWP: <strong>{{ $company->tax_number }}</strong>
+                    <i class="fe fe-mail"></i>
+                    Email: <strong>{{ $report->cp_email }}</strong>
                 </div>
 
             </div>
         </div>
     </div>
-    <div class="col-12">
+    {{-- <div class="col-12">
         <div class="card">
             <div class="card-body">
                 <div>
@@ -66,8 +74,5 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-12">
-        <a href="{{ route('edit_company', ['company' => $company->id]) }}" class="btn btn-primary w-100"><i class="fe fe-edit-2"></i> Ubah Informasi Perusahaan</a>
-    </div>
+    </div> --}}
 </div>

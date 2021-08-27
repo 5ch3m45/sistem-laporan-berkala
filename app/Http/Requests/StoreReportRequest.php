@@ -24,6 +24,7 @@ class StoreReportRequest extends FormRequest
     public function rules()
     {
         return [
+            'company_id' => 'required',
             'file' => 'required',
             'year' => 'required|numeric',
             'quarter' => 'required|numeric'

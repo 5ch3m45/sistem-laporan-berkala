@@ -8,24 +8,11 @@ use App\Models\Employe;
 
 class EmployeController extends Controller
 {
-    public function index(Company $company) {
-        return view('company.employes.index', compact('company'));
-    }
-
-    public function store(Company $company, StoreEmployeRequest $request) {
-        $request['is_contact_person'] = $request->cp ? 1 : 0;
-        // cek contact_person
-        if( $request['is_contact_person'] ==1 && Employe::where(['company_id' => $company->id, 'is_contact_person' => 1])->first() ) {
-            return back()->with('error', 'Sudah ada contact person')->withInput();
-        }
-        
-        $request['company_id'] = $company->id;
-        
+    public function store(StoreEmployeRequest $request) {
         if(Employe::create($request->all())) {
-            return redirect()->route('employe', ['company' => $company->id])
+            return redirect()->route('company_employe', ['company' => $request->company_id])
                 ->with('success', 'Anggota berhasil ditambahkan');
         }
-
         return back()->with('error', 'Gagal. Coba lagi.')->withInput();
     }
 
