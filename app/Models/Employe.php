@@ -14,7 +14,6 @@ class Employe extends Model
         'email',
         'phone',
         'position',
-        'is_contact_person',
         'company_id',
     ];
 
