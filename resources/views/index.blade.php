@@ -4,7 +4,7 @@
 <div class="page">
     <div class="page-main">
         <x-header />
-        <x-navbar />
+        <x-navbar active="dashboard"/>
         <div class="my-3 my-md-5">
             <div class="container-fluid">
                 <div class="page-header">
