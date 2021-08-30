@@ -29,15 +29,16 @@ class AuthController extends Controller
         
         $user = User::where('email', $request->email)->first(); // mencari user dengan email
         if (!$user) { // jika user tidak ditemukan
-            return back()->withErrors(['email' => 'Email tidak terdaftar.']); // kembali ke halaman login dengan pesan error
+            notify()->error('Email tidak dikenali.');
+            return back();
         }
 
         if (Auth::attempt($credentials)) { // jika Auth::attempt true (berhasil login)
             $request->session()->regenerate(); // generate session login
             return redirect()->intended('dashboard'); // redirect ke route dengan nama dashboard
         }
-        
-        return back()->withErrors(['password' => 'Password salah.', ]); // default redirect kembali ke halaman login dengan pesan error
+        notify()->error('Password salah.');
+        return back();
     }
 
     public function registerForm() {
@@ -61,7 +62,8 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first(); // cari user dengan email
         if ($user) { // jika user ada
-            return back()->withError('email', 'Email already registered'); // kembali ke halaman register, beri pesan error
+            notify()->error('Email sudah terdaftar.');
+            return back();
         }
 
         $request['password'] = Hash::make($request->password); // reassign password pada request dengan Hashed password
@@ -75,7 +77,8 @@ class AuthController extends Controller
          */
 
         $user = User::create($request->all()); // buat user
-        return back()->with(['success' => 'Registrasi berhasil. Silahkan login.']); // redirect ke halaman login dengan pesan sukses
+        notify()->success('Berhasil mendaftar. Silahkan login.');
+        return back();
     }
 
     public function logout(Request $request)
