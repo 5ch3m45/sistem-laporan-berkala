@@ -1,79 +1,47 @@
 @extends('components.layout')
 
-@section('title', 'Perusahaan')
-
 @section('content')
-<div class="container">
-  <div class="row">
-    <div class="col-md-16 d-flex align-items-center" style="min-height: 100vh;">
-      <img src="/images/undraw_Airport_re_oqk1.svg" style="width: 80%" alt="">
-    </div>
-    <div class="col-md-8 d-flex align-items-center" style="min-height: 100vh;">
-      <div>
-        @if (\Session::has('success_register'))
-        <div class="alert alert-success shadow-success mb-4" role="alert">
-          <p class="mb-0">Registrasi berhasil. Silahkan <a href='/masuk'>masuk</a>.</p>
+<div class="page page-center">
+    <div class="container-tight py-4">
+        <div class="d-flex justify-content-center mb-4">
+            <a href="."><img src="/assets/images/logo.png" style="height: 6rem" alt=""></a>
         </div>
-        @endif
-        @if (\Session::has('failed_register'))
-        <div class="alert alert-danger shadow-danger mb-4" role="alert">
-          <p class="mb-0">Registrasi gagal. Internal server error. Silahkan hubungi admin.</p>
-        </div>
-        @endif
-        <div class="card border-0 shadow-secondary mb-4 w-100">
-          <div class="card-body">
-            <h2>Buat akun</h2>
-            <p>Masukkan informasi berikut secara lengkap untuk mendaftar</p>
-            <hr>
-            <form action="" method="post">
-              @csrf
-              <div class="mb-3">
-                <label for="inputName" class="form-label">Nama</label>
-                <input type="text" name="name" id="inputName" class="form-control @error('name') is-invalid @enderror">
-                @error('name')
-                  <small class="text-danger">{{ $message }}</small>
-                @enderror
-              </div>
-              <div class="mb-3">
-                <label for="inputEmail" class="form-label">Email</label>
-                <input type="email" name="email" id="inputEmail" class="form-control @error('email') is-invalid @enderror">
-                @error('email')
-                  <small class="text-danger">{{ $message }}</small>
-                @enderror
-              </div>
-              <div class="mb-3">
-                <label for="inputPassword" class="form-label">Password</label>
-                <div class="input-group">
-                  <input type="password" name="password" id="inputPassword" class="form-control @error('password') is-invalid @enderror">
-                  <button id="SeePass" type="button" class="input-group-text"><i class="bi bi-eye"></i></button>
+        <form class="card card-md" action="{{ route('register') }}" method="POST" autocomplete="off">
+            @csrf
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Daftar akun baru</h2>
+                <div class="mb-4">
+                    <label class="form-label">Nama</label>
+                    <input name="name" type="name" class="form-control" placeholder="Masukkan nama">
                 </div>
-                @error('password')
-                  <small class="text-danger">{{ $message }}</small>
-                @enderror
-              </div>
-              <hr>
-              <div class="d-flex justify-content-end">
-                <input type="submit" value="Masuk" class="btn btn-primary shadow-primary text-light">
-              </div>
-            </form>
-          </div>
+                <div class="mb-4">
+                    <label class="form-label">Alamat email</label>
+                    <input name="email" type="email" class="form-control" placeholder="Enter email">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label d-flex justify-content-between">
+                        Password
+                        <span class="form-label-description">
+                            <a href="./forgot-password.html">Lupa password</a>
+                        </span>
+                    </label>
+                    <div class="input-group input-group-flat">
+                        <input name="password" type="password" class="form-control" placeholder="Password" autocomplete="off">
+                        <span class="input-group-text">
+                            <a href="#" class="link-secondary" title="" data-bs-toggle="tooltip" data-bs-original-title="Show password">
+                                <i class="fe fe-eye"></i>
+                            </a>
+                        </span>
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary w-100">Daftar</button>
+                </div>
+            </div>
+        </form>
+        <div class="text-center text-muted mt-3">
+            Sudah punya akun? <a href="{{ route('login') }}" tabindex="-1">Login</a>
         </div>
-        <p class="text-center mb-0">Sudah memiliki akun? <a href="/masuk">Masuk</a></p>
-      </div>
     </div>
-  </div>
 </div>
-@endsection
-
-@section('js')
-  <script>  
-    let seePassBtn = $('#SeePass')
-    let passField = $('input[name=password]')
-    let passSeen = false
-    seePassBtn.on('click', function() {
-      passSeen ? passField.attr('type', 'password') : passField.attr('type', 'text')
-      passSeen = !passSeen
-      seePassBtn.toggleClass('bg-danger text-light')
-    })
-  </script>
 @endsection
