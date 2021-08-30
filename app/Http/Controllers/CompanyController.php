@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCompanyRequest;
 use App\Models\Company;
-use App\Models\File;
+use App\Models\Report;
 use Illuminate\Http\Request;
 
 class CompanyController extends Controller
@@ -44,13 +44,19 @@ class CompanyController extends Controller
     public function update(Company $company, StoreCompanyRequest $request)
     {
         if ($company->update($request->all())) {
-            return back()->with('success', 'Profil perusahaan berhasil diubah'); // dengan message success
+            notify()->success('Perusahaan berhasil diupdate');
+            return back(); // dengan message success
         }
-        return back()->with('error', 'Gagal. Coba lagi.');
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 
     public function analysis(Company $company) {
-        return view('company.analysis', compact('company'));
+        $latest_report = Report::where('company_id', $company->id)
+            ->orderByDesc('year')
+            ->orderByDesc('quarter')
+            ->first();
+        return view('company.analysis', compact('company', 'latest_report'));
     }
     
     public function employes(Company $company) {

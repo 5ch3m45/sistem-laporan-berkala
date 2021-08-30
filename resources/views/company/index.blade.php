@@ -39,7 +39,7 @@
                                 <form class="d-flex flex-row mt-2">
                                     <div class="form-group mr-2">
                                         <label class="form-label">Cari</label>
-                                        <input type="text" class="form-control" name="name" placeholder="Nama perusahaan">
+                                        <input type="text" class="form-control" name="name" placeholder="Nama perusahaan" value="{{ \Request::input('name') }}">
                                     </div>
                                     <div class="form-group mr-2">
                                         <label class="form-label">&nbsp;</label>
@@ -194,6 +194,10 @@
                     @csrf
                     <div class="row">
                         <div class="col-md-12 mb-3">
+                            <label for="inputCode" class="form-label">Kode perusahaan</label>
+                            <input type="text" name="code" id="inputCode" class="form-control">
+                        </div>
+                        <div class="col-md-12 mb-3">
                             <label for="inputName" class="form-label">Nama perusahaan</label>
                             <input type="text" name="name" id="inputName" class="form-control">
                             @error('name')
@@ -257,9 +261,9 @@
                             <input type="date" name="lic_date" required id="inputLicenseDate" class="form-control">
                         </div>
                     </div>
-                    <hr>
+                    <hr class="my-3">
                     <div class="d-flex justify-content-end">
-                        <a href="/perusahaan" class="btn btn-light shadow-secondary me-3">Batal</a>
+                        <button type="button" class="btn btn-light shadow-secondary mr-3" data-bs-dismiss="modal" aria-label="Close">Batal</button>
                         <input type="submit" class="btn btn-primary text-light shadow-primary" value="Simpan">
                     </div>
                 </form>

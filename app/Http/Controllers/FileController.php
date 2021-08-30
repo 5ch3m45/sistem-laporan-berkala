@@ -15,24 +15,7 @@ use App\Models\File;
 
 class FileController extends Controller
 {
-    public function index(Company $company, Request $request)
-    {
-        $files = File::where('company_id', $company->id);
-        
-        if($request->has('name')) {
-            $files = $files->where('name', 'like', '%'.$request->name.'%');
-        }
-
-        $files = $files->orderBy('name')->get(); // dapatkan semua file berdasarkan id perusahaan
-        return view('company.file.index', compact('company', 'files')); // tampilkan view company/file/index.blade.php
-    }
-
-    public function create(Company $company)
-    {
-        return view('company.file.create', compact('company'));
-    }
-
-    public function store(Company $company, StoreFileRequest $request)
+    public function store(StoreFileRequest $request)
     {
         if($request->name) {
             $filename = $request->name . '.xlsx';
@@ -41,39 +24,30 @@ class FileController extends Controller
             $request['name'] = $filename;
         }
 
+        // cek apakah file name is exist
+        if( File::where('name', $filename)->first() ) {
+            notify()->error('File sudah ada.');
+            return back();
+        }
+
         $request['uri'] = 'excel/' . $filename; // menambahkan uri ke $request
-        $request['company_id'] = $company->id; // menambahkan company_id ke $request
         $request['uploaded_by'] = Auth::id(); // menambahkan uploaded_by ke $request
 
-        Storage::putFileAs('excel', $request->file, $filename); // upload file ke folder storage/excel dengan nama $name
-
-        File::create($request->all()); // simpan informasi file ke database
-
-        return redirect()->route('company_file', ['company' => $company->id]) // redirect ke route company_file
-            ->with('success', 'File berhasil diunggah'); // dengan pesan sukses
+        if(Storage::putFileAs('excel', $request->file, $filename) && File::create($request->all())) {
+            notify()->success('File berhasil diunggah');
+            return back();
+        }
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 
-    public function edit(Company $company, File $file)
-    {
-        return view('company.file.edit', compact('company', 'file')); // tampilkan view company/file/edit.blade.php
-    }
-
-    public function update(Company $company, File $file, UpdateFileRequest $request)
-    {
-        $file->update($request->all());
-        return redirect()->route('company_file', ['company' => $company->id]) // redirect ke route company_file
-            ->with(['success' => 'File berhasil diubah']); // dengan pesan sukses
-    }
-
-    public function destroy(Company $company, File $file) {
-        Storage::delete($file->uri);
-        $file->delete();
-        return redirect()->route('company_file', ['company' => $company->id])
-            ->with(['success' => 'File berhasil dihapus.']);
-    }
-
-    public function exportExcel()
-    {
-        return view('company.file.export-excel');
+    public function destroy(Request $request) {
+        $file = File::find($request->file_id);
+        if(Storage::delete($file->uri) && $file->delete()) {
+            notify()->success('Berkas berhasil dihapus.');
+            return back();
+        }
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 }

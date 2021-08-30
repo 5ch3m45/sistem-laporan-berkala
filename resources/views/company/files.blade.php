@@ -50,9 +50,9 @@
                                                         <td>{{ $file->created_at }}</td>
                                                         <td>{{ $file->uploader->name }}</td>
                                                         <td class="text-right">
-                                                            <a class="icon" href="javascript:void(0)">
+                                                            <button class="btn btn-white btn-sm delete-modal-btn" data-id="{{ $file->id }}">
                                                                 <i class="fe fe-trash"></i>
-                                                            </a>
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                     @endforeach
@@ -71,15 +71,19 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="card">
-                                    <form action="{{ route('upload_file') }}" method="POST" class="card-body">
+                                    <form action="{{ route('upload_file') }}" method="POST" class="card-body" enctype="multipart/form-data">
                                         @csrf
                                         <div class="card-title">Unggah Berkas Baru</div>
-                                        <div class="form-group mb-2">
+                                        <input type="hidden" name="company_id" value="{{ $company->id }}">
+                                        <div class="form-group mb-3">
                                             <div class="form-label">Telusuri Berkas</div>
                                             <div class="custom-file">
-                                              <input type="file" class="custom-file-input" name="example-file-input-custom">
+                                              <input type="file" class="custom-file-input" name="file">
                                               <label class="custom-file-label">Choose file</label>
                                             </div>
+                                            @error('file')
+                                                <small class="text-danger">{{ $message }}</small>
+                                            @enderror
                                         </div>
                                         <div class="form-group mb-3">
                                             <label class="form-label">Nama file</label>
@@ -158,4 +162,37 @@
         </div>
     </footer>
 </div>
+<div class="modal modal-blur fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header text-danger">
+                <h5 class="modal-title font-weight-bold" id="deleteModalLabel"><i class="fe fe-alert-triangle"></i> Hapus Berkas</h5>
+                <button type="button" class="btn btn-sm btn-white" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin menghapus berkas ini?</p>
+                <form action="{{ route('delete_file') }}" method="post">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="file_id">
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-light shadow-secondary me-3" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-danger text-light shadow-danger">Ya</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('foot-js')
+    <script>
+        let deleteMdlBtn = $('.delete-modal-btn');
+        let deleteMdl = new bootstrap.Modal($('#deleteModal'))
+        deleteMdlBtn.on('click', function() {
+            $('input[name=file_id]').val($(this).data('id'))
+            deleteMdl.show()
+        })
+    </script>
 @endsection

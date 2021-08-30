@@ -167,6 +167,7 @@ return [
          */
         // PhpOffice\PhpSpreadsheet\Spreadsheet::class,
         // PhpOffice\PhpSpreadsheet\Writer\Xlsx::class,
+        Mckenziearts\Notify\LaravelNotifyServiceProvider::class,
         /*
          * Application Service Providers...
          */

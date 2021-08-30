@@ -32,4 +32,41 @@ class AnalysisController extends Controller
         }
         return response()->json($latest_four_report, 200);
     }
+
+    public function safeDivider($number, $divider) {
+        if($divider == 0) {
+            return 0;
+        }
+        return $number/$divider;
+    }
+
+    public function percentageCounter($base, $to_calculate) {
+        return $this->safeDivider(($to_calculate - $base), $base);
+    }
+
+    public function generateAnalysisArray($collection, $account_code) {
+        $data = [];
+        // q1 ... q5
+        for ($i=0; $i < 5; $i++) { 
+            if($collection[$i]) {
+                $to_push = $collection[$i]->data()->where('account_code', $account_code)->first()->value;
+            } else {
+                $to_push = 0;
+            }
+            array_push($data, $to_push);
+        }
+        array_push($data, $this->percentageCounter($data[0], $data[4])); // yoy
+        array_push($data, $this->percentageCounter($data[0], $data[1])); // qtq1
+        array_push($data, $this->percentageCounter($data[1], $data[2])); // qtq2
+        array_push($data, $this->percentageCounter($data[2], $data[3])); // qtq3
+        array_push($data, $this->percentageCounter($data[3], $data[4])); // qtq4
+
+        return $data;
+    }
+
+    public function generateAnalysisData(Request $request) {
+        $data = [];
+        $latest_reports = $company->reports()->orderByDesc('year')->orderByDesc('quarter')->limit(5)->get();
+        return $this->generateAnalysisArray($latest_reports);
+    }
 }

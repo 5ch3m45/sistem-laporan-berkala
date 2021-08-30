@@ -5,43 +5,40 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreEmployeRequest;
 use App\Models\Company;
 use App\Models\Employe;
+use Illuminate\Http\Request;
 
 class EmployeController extends Controller
 {
     public function store(StoreEmployeRequest $request) {
         if(Employe::create($request->all())) {
-            return redirect()->route('company_employe', ['company' => $request->company_id])
-                ->with('success', 'Anggota berhasil ditambahkan');
+            notify()->success('Dewan baru berhasil disimpan.');
+            return back();
         }
-        return back()->with('error', 'Gagal. Coba lagi.')->withInput();
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 
-    public function edit(Company $company, Employe $employe) {
-        return view('company.employes.edit', compact('company', 'employe'));
-    }
-
-    public function update(Company $company, Employe $employe, StoreEmployeRequest $request) {
-        $request['is_contact_person'] = $request->cp ? 1 : 0;
-        // cek contact_person
-        if( $request['is_contact_person'] ==1 && Employe::where(['company_id' => $company->id, 'is_contact_person' => 1])->first() ) {
-            return back()->with('error', 'Sudah ada contact person')->withInput();
+    public function update(Request $request) {
+        $employe = Employe::find($request->employe_id);
+        if(!$employe) {
+            notify()->error('Data tidak ditemukan.');
+            return back();
         }
-
-        $request['company_id'] = $company->id;
-
         if( $employe->update($request->all()) ) {
-            return redirect()->route('employe', ['company' => $company->id])
-                ->with('success', 'Anggota berhasil diupdate');
+            notify()->success('Berhasil diupdate.');
+            return back();
         }
-
-        return back()->with('error', 'Gagal. Coba lagi.')->withInput();
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 
-    public function destroy(Company $company, Employe $employe) {
-        if( $employe->delete() ) {
-            return back()->with('success', 'Anggota berhasil dihapus');
+    public function destroy(Request $request) {
+        $employe = Employe::find($request->employe_id);
+        if($employe->delete()) {
+            notify()->success('Dewan berhasil dihapus.');
+            return back();
         }
-        
-        return back()->with('error', 'Gagal. Coba lagi')->withInput();
+        notify()->error('Gagal. Coba lagi.');
+        return back();
     }
 }
