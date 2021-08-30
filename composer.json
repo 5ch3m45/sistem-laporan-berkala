@@ -11,6 +11,7 @@
         "guzzlehttp/guzzle": "^7.0.1",
         "laravel/framework": "^8.40",
         "laravel/tinker": "^2.5",
+        "mckenziearts/laravel-notify": "^2.2",
         "phpoffice/phpspreadsheet": "^1.18",
         "phpoffice/phpword": "^0.18.2"
     },
