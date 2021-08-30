@@ -24,9 +24,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::get('report-data', [CompanyReportController::class, 'show']);
+Route::post('export-data-word', [CompanyReportController::class, 'exportWord']);
+Route::post('export-data-excel', [CompanyReportController::class, 'exportExcel']);
 
 // Route::prefix('v1')->group(function () {
 //     Route::get('/perusahaan/{company}/chart', [StatController::class, 'companyStat']);
 //     Route::get('/perusahaan/{company}/analyze', [AnalysisController::class, 'companyAnalysis']);
 // });
-
