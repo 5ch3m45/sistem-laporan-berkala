@@ -16,6 +16,13 @@ class StoreFileRequest extends FormRequest
         return true;
     }
 
+    public function messages()
+    {
+        return [
+            'file.required' => 'File tidak boleh kosong'
+        ];
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -24,8 +31,7 @@ class StoreFileRequest extends FormRequest
     public function rules()
     {
         return [
-            'file' => 'required|file',
-            'description' => 'max:255'
+            'file' => 'required|file'
         ];
     }
 }
