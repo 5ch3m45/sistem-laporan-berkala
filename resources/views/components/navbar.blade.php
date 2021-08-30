@@ -17,7 +17,7 @@
                     <li class="nav-item">
                         <a href="{{ route('company') }}" class="nav-link {{ $active == 'perusahaan' ? 'active' : '' }}"><i class="fe fe-briefcase"></i> Perusahaan</a>
                     </li>
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <a href="{{ route('company') }}" class="nav-link {{ $active == 'berkas' ? 'active' : '' }}"><i class="fe fe-folder"></i> Berkas</a>
                     </li>
                     <li class="nav-item">
@@ -25,7 +25,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="{{ route('company') }}" class="nav-link {{ $active == 'catatan' ? 'active' : '' }}"><i class="fe fe-feather"></i> Catatan</a>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
         </div>
